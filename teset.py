@@ -1,15 +1,19 @@
 import requests
+import telegram
+import time
+import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder,CallbackQueryHandler
 
 
-bot_token = "토큰 아이디"
+bot_token = "token"
 
 url = f"https://api.telegram.org/bot{bot_token}/getUpdates"
+# https://api.telegram.org/bot6750955458:AAErXF6BZPv4l6m7SJZFlw2_aFsOuI-Sue8/getUpdates
+# 그룹방 id -4149801195
+# 채널 id -1002137269394
+channel_id = "채널id"
 
-channel_id = "채널 아이디"
-
-messge = 'test1'
 
 def create_buttons():
     button1 = InlineKeyboardButton('test 1', callback_data='button1')
@@ -38,24 +42,37 @@ async def button_callback(update: Update, context):
     # 팝업 메시지 전송
     await query.answer(text=message,show_alert=True)
 
-def post_message_to_channel():
-    url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
+async def post_message_to_channel():
+    bot = telegram.Bot(token=bot_token)
     buttons = create_buttons()
     keyboard = InlineKeyboardMarkup(buttons)
+    photo_path = '이미지 경로'
+    messge = 'test1'
+    await bot.send_photo(chat_id=channel_id, photo=open(photo_path, 'rb'), reply_markup=keyboard, caption=messge)
+    
+    
+
+def send_chat():
+    url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
+    messge = '매크로 테스트'
     data = {
         'chat_id': channel_id,
         'text': messge,
-        'reply_markup': keyboard.to_json(),
         'parse_mode': 'HTML'
     }
-    response = requests.post(url, json=data)
-    if response.status_code == 200:
-        print('메시지가 성공적으로 게시되었습니다.')
-    else:
-        print('메시지 게시에 실패하였습니다.')
+    requests.post(url, json=data)
+
+
+def run_macro():
+    while True:
+        send_chat()
+        time.sleep(5)
 
 if __name__ == '__main__':
-    post_message_to_channel()
+    async def main():
+        await post_message_to_channel()
+    asyncio.run(main())
+    run_macro()
     application = ApplicationBuilder().token(bot_token).build()
     
     application.add_handler(CallbackQueryHandler(button_callback))
